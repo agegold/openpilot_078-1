@@ -8,6 +8,30 @@ GearShifter = car.CarState.GearShifter
 
 
 class CarState(CarStateBase):
+  def __init__(self, CP):
+    super().__init__(CP)
+
+    self.cruise_main_button = False
+    self.cruise_buttons = False
+
+    self.lkas_button_on = False
+    self.lkas_error = False    
+
+    self.main_on = False
+    self.acc_active = False
+
+    self.driverAcc_time = 0
+
+    # BSM
+    self.leftBlindspot_time = 0
+    self.rightBlindspot_time = 0
+
+    # blinker
+    self.left_blinker_flash = 0
+    self.right_blinker_flash = 0  
+    self.TSigLHSw = 0
+    self.TSigRHSw = 0
+
   def update(self, cp, cp_cam):
     ret = car.CarState.new_message()
 
@@ -174,14 +198,21 @@ class CarState(CarStateBase):
       ("ACCEnable", "TCS13", 0),
       ("BrakeLight", "TCS13", 0),
       ("DriverBraking", "TCS13", 0),
+      ("DriverOverride", "TCS13", 0),
 
       ("ESC_Off_Step", "TCS15", 0),
 
       ("CF_Lvr_GearInf", "LVR11", 0),        # Transmission Gear (0 = N or P, 1-8 = Fwd, 14 = Rev)
 
       ("CR_Mdps_StrColTq", "MDPS12", 0),
+      ("CF_Mdps_Def", "MDPS12", 0),    #
       ("CF_Mdps_ToiActive", "MDPS12", 0),
       ("CF_Mdps_ToiUnavail", "MDPS12", 0),
+      ("CF_Mdps_MsgCount2", "MDPS12", 0),  #
+      ("CF_Mdps_Chksum2", "MDPS12", 0),    #
+      ("CF_Mdps_ToiFlt", "MDPS12", 0),     #
+      ("CF_Mdps_SErr", "MDPS12", 0),       #
+      ("CR_Mdps_StrTq", "MDPS12", 0),       
       ("CF_Mdps_FailStat", "MDPS12", 0),
       ("CR_Mdps_OutTq", "MDPS12", 0),
 
@@ -192,6 +223,7 @@ class CarState(CarStateBase):
       ("VSetDis", "SCC11", 0),
       ("SCCInfoDisplay", "SCC11", 0),
       ("ACC_ObjDist", "SCC11", 0),
+      ("ACC_ObjRelSpd", "SCC11", 0),
       ("ACCMode", "SCC12", 1),
     ]
 
@@ -288,11 +320,13 @@ class CarState(CarStateBase):
       ("CF_Lkas_LdwsRHWarning", "LKAS11", 0),
       ("CF_Lkas_HbaLamp", "LKAS11", 0),
       ("CF_Lkas_FcwBasReq", "LKAS11", 0),
+      ("CF_Lkas_ToiFlt", "LKAS11", 0),  #  append      
       ("CF_Lkas_HbaSysState", "LKAS11", 0),
       ("CF_Lkas_FcwOpt", "LKAS11", 0),
       ("CF_Lkas_HbaOpt", "LKAS11", 0),
       ("CF_Lkas_FcwSysState", "LKAS11", 0),
       ("CF_Lkas_FcwCollisionWarning", "LKAS11", 0),
+      ("CF_Lkas_MsgCount", "LKAS11", 0),  #  append
       ("CF_Lkas_FusionState", "LKAS11", 0),
       ("CF_Lkas_FcwOpt_USM", "LKAS11", 0),
       ("CF_Lkas_LdwsOpt_USM", "LKAS11", 0)
