@@ -33,7 +33,7 @@ const uint8_t alert_colors[][4] = {
 
 float  fFontSize = 0.8;
 
-/*
+
 static void ui_print(UIState *s, int x, int y,  const char* fmt, ... )
 {
   char* msg_buf = NULL;
@@ -43,7 +43,7 @@ static void ui_print(UIState *s, int x, int y,  const char* fmt, ... )
   va_end(args);
   nvgText(s->vg, x, y, msg_buf, NULL);
 }
-*/
+
 // Projects a point in car to space to the corresponding point in full frame
 // image space.
 vec3 car_space_to_full_frame(const UIState *s, vec4 car_space_projective) {
@@ -111,14 +111,29 @@ static void draw_chevron(UIState *s, float x_in, float y_in, float sz,
   nvgFill(s->vg);
 }
 
-static void ui_draw_circle_image(NVGcontext *vg, float x, float y, int size, int image, NVGcolor color, float img_alpha, int img_y = 0) {
+
+static void ui_draw_circle_image(NVGcontext *vg, float x, float y, int size, int image, NVGcolor color, float img_alpha, float angleSteers = 0 ) // int img_y = 0) 
+{
+  float img_rotation =  angleSteers/180*3.141592;
+  int ct_pos = -size * 0.75;
+
   const int img_size = size * 1.5;
   nvgBeginPath(vg);
   nvgCircle(vg, x, y + (bdr_s * 1.5), size);
   nvgFillColor(vg, color);
   nvgFill(vg);
-  ui_draw_image(vg, x - (img_size / 2), img_y ? img_y : y - (size / 4), img_size, img_size, image, img_alpha);
+
+  nvgSave( vg );
+  nvgTranslate(vg,x,(y + (bdr_s*1.5)));
+  nvgRotate(vg,-img_rotation);
+
+  ui_draw_image(vg, ct_pos, ct_pos, img_size, img_size, image, img_alpha);
+  //ui_draw_image(vg, x - (img_size / 2), img_y ? img_y : y - (size / 4), img_size, img_size, image, img_alpha);
+
+  nvgRestore(vg);  
 }
+
+
 
 static void ui_draw_circle_image(NVGcontext *vg, float x, float y, int size, int image, bool active) {
   float bg_alpha = active ? 0.3f : 0.1f;
@@ -519,6 +534,87 @@ static void ui_draw_vision_speedlimit(UIState *s) {
 }
 #endif
 
+
+static void ui_draw_debug(UIState *s) 
+{
+  UIScene &scene = s->scene;
+  int ui_viz_rx = scene.ui_viz_rx;
+
+  nvgTextAlign(s->vg, NVG_ALIGN_LEFT | NVG_ALIGN_BASELINE);
+  nvgFontSize(s->vg, 36*1.5*fFontSize);
+  
+
+  int nPos = 0;
+  int y_pos = 200; 
+  int x_pos = ui_viz_rx + 300;
+
+  ui_print( s, x_pos, y_pos+50*nPos++, "sR:%.2f,%.5f", scene.live.steerRatio, scene.kegman.output_scale );
+  ui_print( s, x_pos, y_pos+50*nPos++, "%d,%d,%d", scene.frontview , scene.fullview, scene.world_objects_visible );
+  ui_print( s, x_pos, y_pos+50*nPos++, "%d,%d,%d,%d", s->started , (int)s->active_app, s->vision_seen, s->status );
+
+/*
+  ui_print( s, x_pos, y_pos+50*nPos++, "aO:%.2f", scene.live.angleOffset );
+  ui_print( s, x_pos, y_pos+50*nPos++, "aA:%.2f", scene.live.angleOffsetAverage );
+  ui_print( s, x_pos, y_pos+50*nPos++, "sF:%.2f", scene.live.stiffnessFactor );
+  ui_print( s, x_pos, y_pos+50*nPos++, "yaw:%.2f", scene.live.yawRate );
+  ui_print( s, x_pos, y_pos+50*nPos++, "pS:%.2f", scene.live.posenetSpeed );
+  ui_print( s, x_pos, y_pos+50*nPos++, "gB:%.2f", scene.live.gyroBias );
+*/
+
+ // ui_print( s, x_pos, y_pos+50*nPos++, "ID:%d", scene.fame.frame_id );
+ // ui_print( s, x_pos, y_pos+50*nPos++, "tS:%d", scene.fame.timestamp_eof );
+ // ui_print( s, x_pos, y_pos+50*nPos++, "fL:%d", scene.fame.frame_length );
+ // ui_print( s, x_pos, y_pos+50*nPos++, "iL:%d", scene.fame.integ_lines );
+ // ui_print( s, x_pos, y_pos+50*nPos++, "gG:%d", scene.fame.global_gain );
+ // ui_print( s, x_pos, y_pos+50*nPos++, "lP:%d", scene.fame.lensPos );
+ // ui_print( s, x_pos, y_pos+50*nPos++, "lS:%.2f", scene.fame.dlensSag );
+ // ui_print( s, x_pos, y_pos+50*nPos++, "lE:%.2f", scene.fame.dlensErr );
+ // ui_print( s, x_pos, y_pos+50*nPos++, "lT:%.2f", scene.fame.dlensTruePos );
+    
+  
+
+  ui_print( s, 0, 1020, "%s", scene.alert.text1 );
+  ui_print( s, 0, 1078, "%s", scene.alert.text2 );
+
+}
+
+
+/*
+  park @1;
+  drive @2;
+  neutral @3;
+  reverse @4;
+  sport @5;
+  low @6;
+  brake @7;
+  eco @8;
+*/
+static void ui_draw_gear( UIState *s )
+{
+  UIScene &scene = s->scene;  
+  NVGcolor nColor = COLOR_WHITE;
+
+  int  ngetGearShifter = int(scene.getGearShifter);
+  int  x_pos = 1700;
+  int  y_pos = 200;
+  char str_msg[512];
+
+  nvgFontSize(s->vg, 150 );
+  switch( ngetGearShifter )
+  {
+    case 1 : strcpy( str_msg, "P" ); nColor = nvgRGBA(200, 200, 255, 255); break;
+    case 2 : strcpy( str_msg, "D" ); nColor = nvgRGBA(200, 200, 255, 255); break;
+    case 3 : strcpy( str_msg, "N" ); nColor = COLOR_WHITE; break;
+    case 4 : strcpy( str_msg, "R" ); nColor = COLOR_RED; break;
+    case 7 : strcpy( str_msg, "B" ); break;
+    default: sprintf( str_msg, "%d", ngetGearShifter ); break;
+  }
+
+  nvgFillColor(s->vg, nColor);
+  ui_print( s, x_pos, y_pos, str_msg );
+}
+
+
 static void ui_draw_vision_speed(UIState *s) {
   const UIScene *scene = &s->scene;
   float v_ego = s->scene.controls_state.getVEgo();
@@ -537,6 +633,8 @@ static void ui_draw_vision_speed(UIState *s) {
   snprintf(speed_str, sizeof(speed_str), "%d", (int)speed);
   ui_draw_text(s->vg, viz_speed_x + viz_speed_w / 2, 240, speed_str, 96*2.5, COLOR_WHITE, s->font_sans_bold);
   ui_draw_text(s->vg, viz_speed_x + viz_speed_w / 2, 320, s->is_metric?"kph":"mph", 36*2.5, COLOR_WHITE_ALPHA(200), s->font_sans_regular);
+
+    ui_draw_debug( s );
 }
 
 static void ui_draw_vision_event(UIState *s) {
@@ -562,8 +660,15 @@ static void ui_draw_vision_event(UIState *s) {
     }
 
     if (s->scene.controls_state.getEngageable()){
-      ui_draw_circle_image(s->vg, bg_wheel_x, bg_wheel_y, bg_wheel_size, s->img_wheel, color, 1.0f, bg_wheel_y - 25);
+      float angleSteers = s->scene.controls_state.getAngleSteers();
+      ui_draw_circle_image(s->vg, bg_wheel_x, bg_wheel_y, bg_wheel_size, s->img_wheel, color, 1.0f, angleSteers );// bg_wheel_y - 25);
+
+      //ui_draw_circle_image(s->vg, bg_wheel_x, bg_wheel_y, bg_wheel_size, s->img_wheel, color, 1.0f, bg_wheel_y - 25);
     }
+    else  
+    {
+      ui_draw_gear( s );
+    }    
   }
 }
 
