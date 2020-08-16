@@ -167,8 +167,8 @@ static int write_param_float(float param, const char* param_name, bool persisten
 static void ui_init(UIState *s) {
 
   pthread_mutex_init(&s->lock, NULL);
-  s->sm = new SubMaster({"model", "controlsState", "uiLayoutState", "liveCalibration", "radarState", "thermal",
-                         "health", "ubloxGnss", "driverState", "dMonitoringState"
+  s->sm = new SubMaster({"model", "controlsState", "carState", "uiLayoutState", "liveCalibration", "radarState", "thermal",
+                         "health", "ubloxGnss", "driverState", "dMonitoringState", "liveParameters", "liveMpc"
 #ifdef SHOW_SPEEDLIMIT
                                     , "liveMapData"
 #endif
@@ -179,6 +179,7 @@ static void ui_init(UIState *s) {
   s->scene.satelliteCount = -1;
   s->started = false;
   s->vision_seen = false;
+  s->livempc_or_radarstate_changed = false;
 
   // init display
   s->fb = framebuffer_init("ui", 0, true, &s->fb_w, &s->fb_h);
@@ -309,11 +310,42 @@ void handle_message(UIState *s, SubMaster &sm) {
         }
       }
     }
+
+
+    scene.engaged = scene.controls_state.getEnabled();
+    scene.angleSteers = scene.controls_state.getAngleSteers();
+    scene.angleSteersDes = scene.controls_state.getAngleSteersDes();
+
+
+// debug Message
+    std::string user_text1 = scene.controls_state.getAlertTextMsg1();
+    std::string user_text2 = scene.controls_state.getAlertTextMsg2();
+    const char* va_text1 = user_text1.c_str();
+    const char* va_text2 = user_text2.c_str();    
+    if (va_text1) 
+      snprintf(scene.alert.text1, sizeof(scene.alert.text1), "%s", va_text1);
+    else 
+      scene.alert.text1[0] = '\0';
+
+    if (va_text2) 
+      snprintf(scene.alert.text2, sizeof(scene.alert.text2), "%s", va_text2);
+    else 
+      scene.alert.text2[0] = '\0';
+
+    // kegman
+    scene.kegman.steerOverride= scene.controls_state.getSteerOverride();
+    scene.kegman.output_scale = scene.controls_state.getLateralControlState().getPidState().getOutput();     
+
   }
   if (sm.updated("radarState")) {
     auto data = sm["radarState"].getRadarState();
     scene.lead_data[0] = data.getLeadOne();
     scene.lead_data[1] = data.getLeadTwo();
+
+    scene.lead_status = scene.lead_data[0].getStatus();
+    scene.lead_d_rel = scene.lead_data[0].getDRel();
+    scene.lead_y_rel = scene.lead_data[0].getYRel();
+    scene.lead_v_rel = scene.lead_data[0].getVRel();      
   }
   if (sm.updated("liveCalibration")) {
     scene.world_objects_visible = true;
@@ -325,16 +357,17 @@ void handle_message(UIState *s, SubMaster &sm) {
   if (sm.updated("model")) {
     read_model(scene.model, sm["model"].getModel());
   }
-  // else if (which == cereal::Event::LIVE_MPC) {
-  //   auto data = event.getLiveMpc();
-  //   auto x_list = data.getX();
-  //   auto y_list = data.getY();
-  //   for (int i = 0; i < 50; i++){
-  //     scene.mpc_x[i] = x_list[i];
-  //     scene.mpc_y[i] = y_list[i];
-  //   }
-  //   s->livempc_or_radarstate_changed = true;
-  // }
+  if (sm.updated("liveMpc")) {
+     auto data = sm["liveMpc"].getLiveMpc();
+     auto x_list = data.getX();
+     auto y_list = data.getY();
+    for (int i = 0; i < 50; i++){
+       scene.mpc_x[i] = x_list[i];
+       scene.mpc_y[i] = y_list[i];
+       LOGW("[%d,%.3f, %.3f] ", i, scene.mpc_x[i], scene.mpc_y[i]);
+     }
+     s->livempc_or_radarstate_changed = true;
+  }
   if (sm.updated("uiLayoutState")) {
     auto data = sm["uiLayoutState"].getUiLayoutState();
     s->active_app = data.getActiveApp();
@@ -347,6 +380,9 @@ void handle_message(UIState *s, SubMaster &sm) {
 #endif
   if (sm.updated("thermal")) {
     scene.thermal = sm["thermal"].getThermal();
+
+    scene.maxBatTemp = scene.thermal.getBat();
+    scene.maxCpuTemp = scene.thermal.getCpu0();        
   }
   if (sm.updated("ubloxGnss")) {
     auto data = sm["ubloxGnss"].getUbloxGnss();
@@ -366,7 +402,27 @@ void handle_message(UIState *s, SubMaster &sm) {
     scene.is_rhd = scene.dmonitoring_state.getIsRHD();
     scene.frontview = scene.dmonitoring_state.getIsPreview();
   }
+  if (sm.updated("carState")) {
+    auto data = sm["carState"].getCarState();
+    scene.brakePress = data.getBrakePressed();
+    scene.brakeLights = data.getBrakeLights();
 
+    scene.leftBlinker = data.getLeftBlinker();
+    scene.rightBlinker = data.getRightBlinker();
+    scene.getGearShifter = data.getGearShifter();
+  }
+  if ( sm.updated("liveParameters") )
+  {
+    auto data = sm["liveParameters"].getLiveParameters();
+
+    scene.live.gyroBias = data.getGyroBias();
+    scene.live.angleOffset = data.getAngleOffset();
+    scene.live.angleOffsetAverage = data.getAngleOffsetAverage();
+    scene.live.stiffnessFactor = data.getStiffnessFactor();
+    scene.live.steerRatio = data.getSteerRatio();
+    scene.live.yawRate = data.getYawRate();
+    scene.live.posenetSpeed = data.getPosenetSpeed();
+  }
   // timeout on frontview
   if ((sm.frame - sm.rcv_frame("dMonitoringState")) > 1*UI_FREQ) {
     scene.frontview = false;

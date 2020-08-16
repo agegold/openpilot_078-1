@@ -126,6 +126,55 @@ typedef struct UIScene {
   cereal::ControlsState::Reader controls_state;
   cereal::DriverState::Reader driver_state;
   cereal::DMonitoringState::Reader dmonitoring_state;
+
+
+  // dev ui
+  uint16_t maxCpuTemp;
+  uint32_t maxBatTemp;
+  float angleSteers;  
+  float angleSteersDes;  
+
+  int  engaged;
+  float v_ego;
+
+
+  int lead_status;
+  float lead_d_rel, lead_y_rel, lead_v_rel;
+
+  bool  brakePress;
+  bool  brakeLights;
+  bool  leftBlinker;
+  bool  rightBlinker;
+
+
+
+  cereal::CarState::GearShifter  getGearShifter;  
+
+  struct _LIVE_PARAM
+  {
+    float gyroBias;
+    float angleOffset;
+    float angleOffsetAverage;
+    float stiffnessFactor;
+    float steerRatio;
+    float yawRate;
+    float posenetSpeed;
+  } live;
+
+
+
+  struct _STATUS_
+  {
+      char text1[512];
+      char text2[512];
+  } alert;
+
+  struct _KEGMEN_
+  {
+      bool steerOverride;
+      float output_scale;
+  } kegman;
+
 } UIScene;
 
 typedef struct {
@@ -226,6 +275,8 @@ typedef struct UIState {
   bool alert_blinked;
   bool started;
   bool vision_seen;
+
+  bool livempc_or_radarstate_changed;  
 
   std::atomic<float> light_sensor;
 
