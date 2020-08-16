@@ -433,8 +433,8 @@ def thermald_thread():
     fw_version_match_prev = fw_version_match
     should_start_prev = should_start
 
-    #if usb_power:
-    #  pm.charging_ctrl( msg, ts, 80, 70 )
+    if usb_power:
+      pm.charging_ctrl( msg, ts, 70, 60 )
 
     # report to server once per minute
     if (count % int(60. / DT_TRML)) == 0:
