@@ -1,4 +1,4 @@
-from cereal import car
+from cereal import car, log
 from common.realtime import DT_CTRL
 from selfdrive.car import apply_std_steer_torque_limits
 from selfdrive.car.hyundai.hyundaican import create_lkas11, create_clu11, create_lfa_mfa, create_mdps12
