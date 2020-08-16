@@ -186,6 +186,7 @@ def thermald_thread():
   no_panda_cnt = 0
 
   while 1:
+    ts = sec_since_boot()
     health = messaging.recv_sock(health_sock, wait=True)
     location = messaging.recv_sock(location_sock)
     location = location.gpsLocation if location else None
