@@ -145,7 +145,7 @@ def handle_fan_uno(max_cpu_temp, bat_temp, fan_speed, ignition):
 
 def thermald_thread():
   # prevent LEECO from undervoltage
-  BATT_PERC_OFF = 10 if LEON else 3
+  BATT_PERC_OFF = 95 if LEON else 90
 
   health_timeout = int(1000 * 2.5 * DT_TRML)  # 2.5x the expected health frequency
 
@@ -432,6 +432,9 @@ def thermald_thread():
     usb_power_prev = usb_power
     fw_version_match_prev = fw_version_match
     should_start_prev = should_start
+
+    #if usb_power:
+    #  pm.charging_ctrl( msg, ts, 80, 70 )
 
     # report to server once per minute
     if (count % int(60. / DT_TRML)) == 0:

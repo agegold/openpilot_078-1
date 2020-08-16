@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import gc
+import time
 from cereal import car
 from common.realtime import set_realtime_priority
 from common.params import Params
@@ -43,6 +44,7 @@ def dmonitoringd_thread(sm=None, pm=None):
 
   # 10Hz <- dmonitoringmodeld
   while True:
+    time.sleep(0.02)
     sm.update()
 
     # Get interaction
