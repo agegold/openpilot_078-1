@@ -49,6 +49,14 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.lqr.k = [-100., 450.]
       ret.lateralTuning.lqr.l = [0.22, 0.318]
       ret.lateralTuning.lqr.dcGain = 0.003
+
+      ret.atomTuning.ksBP = [30., 60., 80.]   # Speed  kph
+      ret.atomTuning.cvV = [[100., 200., 255.], [100., 200., 255.], [100., 200., 255.] ]  # CV
+      ret.atomTuning.cvSteerMaxV = [[255,250,200] ,[255,250,200] ,[255,250,200]]
+      ret.atomTuning.cvSteerdUpV = [[3,3,2],[3,3,2],[3,3,2]]
+      ret.atomTuning.cvSteerdDnV = [[3,3,3],[5,5,5],[7,7,5]]
+      ret.atomTuning.deadzone = 0.1
+
     elif candidate == CAR.SANTA_FE:
       ret.lateralTuning.pid.kf = 0.00005
       ret.mass = 3982. * CV.LB_TO_KG + STD_CARGO_KG

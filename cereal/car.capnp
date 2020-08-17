@@ -406,6 +406,18 @@ struct CarParams {
   communityFeature @46: Bool;  # true if a community maintained feature is detected
   fingerprintSource @49: FingerprintSource;
   networkLocation @50 :NetworkLocation;  # Where Panda/C2 is integrated into the car's CAN network
+  atomTuning @51 :AtomTuning;
+
+
+  struct AtomTuning {
+    ksBP @0 :List(Float32);
+    cvV @1 :List(List(Float32));
+    cvSteerMaxV @2 :List(List(Float32));
+    cvSteerdUpV @3 :List(List(Float32));
+    cvSteerdDnV @4 :List(List(Float32));
+    deadzone  @5 :Float32;
+  }
+
 
   struct LateralParams {
     torqueBP @0 :List(Int32);
