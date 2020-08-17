@@ -143,6 +143,20 @@ def handle_fan_uno(max_cpu_temp, bat_temp, fan_speed, ignition):
   return new_speed
 
 
+def power_shutdown( msg, ts, off_ts, started_seen, batt_perc_off, power_off_time ):
+  shutdown = False
+
+  if msg.thermal.batteryStatus == "Discharging":
+    delta_ts = ts - off_ts
+    if started_seen:
+      if msg.thermal.batteryPercent <= batt_perc_off and delta_ts > power_off_time:
+        shutdown = True
+    elif delta_ts > 240 and msg.thermal.batteryPercent < 30:
+      shutdown = True
+
+    #print( 'shutdown={} power={} started_seen={} Percent={} batt_perc_off={}'.format( shutdown, delta_ts, started_seen, msg.thermal.batteryPercent, batt_perc_off ) )
+  return shutdown
+
 def thermald_thread():
   # prevent LEECO from undervoltage
   BATT_PERC_OFF = 95 if LEON else 90
@@ -354,6 +368,7 @@ def thermald_thread():
     panda_signature = params.get("PandaFirmware")
     fw_version_match = (panda_signature is None) or (panda_signature == FW_SIGNATURE)   # don't show alert is no panda is connected (None)
 
+    ignition = True  #  영상보기.
     should_start = ignition
 
     # with 2% left, we killall, otherwise the phone will take a long time to boot
@@ -409,8 +424,7 @@ def thermald_thread():
 
       # shutdown if the battery gets lower than 3%, it's discharging, we aren't running for
       # more than a minute but we were running
-      if msg.thermal.batteryPercent < BATT_PERC_OFF and msg.thermal.batteryStatus == "Discharging" and \
-         started_seen and (sec_since_boot() - off_ts) > 60:
+      if power_shutdown( msg, ts, off_ts, started_seen, BATT_PERC_OFF, 10 ):
         os.system('LD_LIBRARY_PATH="" svc power shutdown')
 
     # Offroad power monitoring
