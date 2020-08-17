@@ -50,11 +50,13 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.lqr.l = [0.22, 0.318]
       ret.lateralTuning.lqr.dcGain = 0.003
 
-      ret.atomTuning.ksBP = [30., 60., 80.]   # Speed  kph
+      ret.atomTuning.ksBP = [30.*CV.KPH_TO_MS, 60.*CV.KPH_TO_MS, 80.*CV.KPH_TO_MS]   # Speed  kph
       ret.atomTuning.cvV = [[100., 200., 255.], [100., 200., 255.], [100., 200., 255.] ]  # CV
       ret.atomTuning.cvSteerMaxV = [[255,250,200] ,[255,250,200] ,[255,250,200]]
       ret.atomTuning.cvSteerdUpV = [[3,3,2],[3,3,2],[3,3,2]]
       ret.atomTuning.cvSteerdDnV = [[3,3,3],[5,5,5],[7,7,5]]
+      ret.atomTuning.kiV = [[0.02,0.015,0.01],[0.02,0.015,0.01],[0.02,0.015,0.01]]
+      ret.atomTuning.kscaleV = [[1900.0,1950.0,2000.0],[1900.0,1950.0,2000.0],[1900.0,1950.0,2000.0]]
       ret.atomTuning.deadzone = 0.1
 
     elif candidate == CAR.SANTA_FE:

@@ -415,6 +415,8 @@ struct CarParams {
     cvSteerMaxV @2 :List(List(Float32));
     cvSteerdUpV @3 :List(List(Float32));
     cvSteerdDnV @4 :List(List(Float32));
+    kiV @4 :List(List(Float32));
+    kscaleV @4 :List(List(Float32));
     deadzone  @5 :Float32;
   }
 
