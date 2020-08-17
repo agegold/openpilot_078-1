@@ -102,9 +102,9 @@ class CarController():
     self.cvSteerdUPV = self.CP.atomTuning.cvSteerdUpV
     self.cvSteerdDNV = self.CP.atomTuning.cvSteerdDnV
 
-    self.steerMAX = {}
-    self.steerdUP = {}
-    self.steerdDN = {}
+    self.steerMAX = [255,255,255]
+    self.steerdUP = [3,3,3]
+    self.steerdDN = [7,7,7]
 
     # Max
     nPos = 0
