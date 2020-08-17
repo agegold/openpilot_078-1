@@ -250,6 +250,33 @@ static void ui_draw_track(UIState *s, bool is_mpc, track_vertices_data *pvd) {
   }
   nvgClosePath(s->vg);
 
+
+  NVGpaint track_bg;
+  int red_lvl = 0;
+  int green_lvl = 0;  
+  if (is_mpc) {
+    // Draw colored MPC track Kegman's
+    if (s->scene.kegman.steerOverride) {
+      track_bg = nvgLinearGradient(s->vg, vwp_w, vwp_h, vwp_w, vwp_h*.4,
+        nvgRGBA(0, 191, 255, 255), nvgRGBA(0, 95, 128, 50));
+    } else {
+      int torque_scale = (int)fabs(510*(float)s->scene.kegman.output_scale);
+      red_lvl = fmin(255, torque_scale);
+      green_lvl = fmin(255, 510-torque_scale);
+
+      NVGcolor color1 = nvgRGBA(          red_lvl,            green_lvl,  0, 255); 
+      NVGcolor color2 = nvgRGBA((int)(0.5*red_lvl), (int)(0.5*green_lvl), 0, 50);
+
+      track_bg = nvgLinearGradient(s->vg, vwp_w, vwp_h, vwp_w, vwp_h*.4,
+        color1, color2 );        
+    }
+  } else {
+    // Draw white vision track
+    track_bg = nvgLinearGradient(s->vg, vwp_w, vwp_h, vwp_w, vwp_h*.4,
+       COLOR_WHITE, COLOR_WHITE_ALPHA(0));
+
+  } 
+ /*
   NVGpaint track_bg;
   if (is_mpc) {
     // Draw colored MPC track
@@ -261,6 +288,7 @@ static void ui_draw_track(UIState *s, bool is_mpc, track_vertices_data *pvd) {
     track_bg = nvgLinearGradient(s->vg, vwp_w, vwp_h, vwp_w, vwp_h*.4,
       COLOR_WHITE, COLOR_WHITE_ALPHA(0));
   }
+  */
   nvgFillPaint(s->vg, track_bg);
   nvgFill(s->vg);
 }

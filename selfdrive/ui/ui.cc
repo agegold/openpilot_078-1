@@ -336,8 +336,8 @@ void handle_message(UIState *s, SubMaster &sm) {
 
     // kegman
     scene.kegman.steerOverride= scene.controls_state.getSteerOverride();
-    scene.kegman.output_scale = scene.controls_state.getLateralControlState().getPidState().getOutput();     
-
+    scene.kegman.output_scale = scene.controls_state.getLateralControlState().getLqrState().getOutput();     
+                                                                                 
   }
   if (sm.updated("radarState")) {
     auto data = sm["radarState"].getRadarState();
