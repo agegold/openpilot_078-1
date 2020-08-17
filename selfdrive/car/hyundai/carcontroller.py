@@ -120,7 +120,7 @@ class CarController():
     UP  = interp( v_ego, self.ksBPV, self.steerdUP )
     DN  = interp( v_ego, self.ksBPV, self.steerdDN )
 
-    str_log1 = 'ego={:.0f},{},{},{},{}'.format(v_ego, self.ksBPV, MAX, UP, DN )
+    str_log1 = 'ego={:.1f} / {} /  {} / {} / {}'.format(v_ego, nPos, MAX, UP, DN )
     trace1.printf2( '{}'.format( str_log1 ) )      
     return MAX, UP, DN
   
