@@ -55,8 +55,10 @@ class CarInterface(CarInterfaceBase):
       ret.atomTuning.cvSteerMaxV = [[255,250,180] ,[255,250,190] ,[255,250,200]]
       ret.atomTuning.cvSteerdUpV = [[3,3,2],[3,3,2],[3,3,2]]
       ret.atomTuning.cvSteerdDnV = [[5,4,3],[7,5,5],[7,5,3]]
-      ret.atomTuning.kiV = [[0.02,0.015,0.01],[0.02,0.015,0.01],[0.02,0.015,0.01]]
-      ret.atomTuning.kscaleV = [[1900.0,1950.0,2000.0],[1900.0,1950.0,2000.0],[1900.0,1950.0,2000.0]]
+
+      ret.atomTuning.srV = [[-10, 0., 10], [-10., 0., 10.], [-10., 0., 10.] ]  # CV
+      ret.atomTuning.srkiV = [[0.02,0.01,0.02],[0.02,0.01,0.02],[0.02,0.01,0.02]]
+      ret.atomTuning.srscaleV = [[1700.0,2000.0,1700.0],[1700.0,2000.0,1700.0],[1700.0,2000.0,1700.0]]
 
 
     elif candidate == CAR.SANTA_FE:

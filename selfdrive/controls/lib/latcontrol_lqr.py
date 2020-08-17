@@ -44,6 +44,29 @@ class LatControlLQR():
 
     return self.sat_count > self.sat_limit
 
+
+  def atom_tune( self, v_ego, sr_value ):  # 조향각에 따른 변화.
+    self.ksBPV = self.CP.atomTuning.ksBP
+    self.srV = self.CP.atomTuning.srV
+    self.srkiV  = self.CP.atomTuning.srkiV
+    self.srscaleV = self.CP.atomTuning.srscaleV
+
+    self.srki = []
+    self.srscale = []
+
+    nPos = 0
+    for srX in self.srV:  # steerRatio
+      self.srki.append( interp( sr_value, srX, self.srkiV[nPos] ) )
+      self.srscale.append( interp( sr_value, srX, self.srscaleV[nPos] ) )
+      nPos += 1
+      if nPos > 10:
+        break
+
+    ki = interp( v_ego, self.ksBPV, self.srki )
+    scale  = interp( v_ego, self.ksBPV, self.srscale )
+     
+    return ki, scale   
+
   def update(self, active, CS, CP, path_plan):
     lqr_log = log.ControlsState.LateralLQRState.new_message()
 
@@ -51,6 +74,8 @@ class LatControlLQR():
     torque_scale = (0.45 + CS.vEgo / 60.0)**2  # Scale actuator model with speed
 
     steering_angle = CS.steeringAngle
+
+    self.ki, self.scale = self.atom_tune( CS.vEgo, CS.steeringAngle )
 
     # Subtract offset. Zero angle should correspond to zero torque
     self.angle_steers_des = path_plan.angleSteers - path_plan.angleOffset
