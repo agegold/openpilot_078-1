@@ -274,7 +274,6 @@ static void ui_draw_track(UIState *s, bool is_mpc, track_vertices_data *pvd) {
     // Draw white vision track
     track_bg = nvgLinearGradient(s->vg, vwp_w, vwp_h, vwp_w, vwp_h*.4,
        COLOR_WHITE, COLOR_WHITE_ALPHA(0));
-
   } 
  /*
   NVGpaint track_bg;
