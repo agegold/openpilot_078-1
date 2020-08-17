@@ -185,7 +185,7 @@ class CarController():
       apply_steer = self.limit_ctrl( apply_steer, apply_steer_limit, 0 )
 
     # disable if steer angle reach 90 deg, otherwise mdps fault in some models
-    lkas_active = enabled and abs(CS.out.steeringAngle) < 90.
+    lkas_active = enabled and abs(CS.out.steeringAngle) < 120.
 
     # fix for Genesis hard fault at low speed
     if CS.out.vEgo < 16.7 and self.car_fingerprint == CAR.HYUNDAI_GENESIS:
@@ -214,7 +214,7 @@ class CarController():
     can_sends.append(create_mdps12(self.packer, frame, CS.mdps12))
 
 
-    str_log1 = 'torg:{:>4.0f}/{:>4.0f}'.format(  apply_steer, new_steer )
+    str_log1 = 'torg:{:>4.0f}/{:>4.0f} CV:{:>5.0f}'.format(  apply_steer, new_steer, self.model_speed )
     str_log2 = 'max={:>4.0f} tm={:>5.1f} '.format( apply_steer_limit, self.timer1.sampleTime()  )
     trace1.printf( '{} {}'.format( str_log1, str_log2 ) )
 

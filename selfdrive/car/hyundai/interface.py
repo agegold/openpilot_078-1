@@ -34,15 +34,15 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 1675. + STD_CARGO_KG
       ret.wheelbase = 2.845
       ret.steerRatio = 13.96   #12.5
-      ret.steerMaxBP = [30*CV.KPH_TO_MS, 70*CV.KPH_TO_MS]
-      ret.steerMaxV = [1.2, 1.0]
+      ret.steerMaxBP = [0.]
+      ret.steerMaxV = [1.0]
       ret.lateralTuning.pid.kf = 0.000005
       ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0.], [0.]]
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.25], [0.05]]
 
       ret.lateralTuning.init('lqr')
-      ret.lateralTuning.lqr.scale = 1950.0
-      ret.lateralTuning.lqr.ki = 0.01
+      ret.lateralTuning.lqr.scale = 1700.0
+      ret.lateralTuning.lqr.ki = 0.02
       ret.lateralTuning.lqr.a = [0., 1., -0.22619643, 1.21822268]
       ret.lateralTuning.lqr.b = [-1.92006585e-04, 3.95603032e-05]
       ret.lateralTuning.lqr.c = [1., 0.]
@@ -52,12 +52,12 @@ class CarInterface(CarInterfaceBase):
 
       ret.atomTuning.ksBP = [30.*CV.KPH_TO_MS, 60.*CV.KPH_TO_MS, 80.*CV.KPH_TO_MS]   # Speed  kph
       ret.atomTuning.cvV = [[100., 200., 255.], [100., 200., 255.], [100., 200., 255.] ]  # CV
-      ret.atomTuning.cvSteerMaxV = [[255,250,200] ,[255,250,200] ,[255,250,200]]
+      ret.atomTuning.cvSteerMaxV = [[255,250,180] ,[255,250,190] ,[255,250,200]]
       ret.atomTuning.cvSteerdUpV = [[3,3,2],[3,3,2],[3,3,2]]
-      ret.atomTuning.cvSteerdDnV = [[3,3,3],[5,5,5],[7,7,5]]
+      ret.atomTuning.cvSteerdDnV = [[5,4,3],[7,5,5],[7,5,3]]
       ret.atomTuning.kiV = [[0.02,0.015,0.01],[0.02,0.015,0.01],[0.02,0.015,0.01]]
       ret.atomTuning.kscaleV = [[1900.0,1950.0,2000.0],[1900.0,1950.0,2000.0],[1900.0,1950.0,2000.0]]
-      ret.atomTuning.deadzone = 0.1
+
 
     elif candidate == CAR.SANTA_FE:
       ret.lateralTuning.pid.kf = 0.00005

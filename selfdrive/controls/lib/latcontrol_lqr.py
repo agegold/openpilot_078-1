@@ -7,6 +7,7 @@ from cereal import log
 
 class LatControlLQR():
   def __init__(self, CP):
+    self.CP = CP
     self.scale = CP.lateralTuning.lqr.scale
     self.ki = CP.lateralTuning.lqr.ki
 
