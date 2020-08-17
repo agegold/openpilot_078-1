@@ -5,9 +5,15 @@ from selfdrive.car.hyundai.hyundaican import create_lkas11, create_clu11, create
 from selfdrive.car.hyundai.values import Buttons, SteerLimitParams, CAR
 from opendbc.can.packer import CANPacker
 from selfdrive.config import Conversions as CV
+from common.numpy_fast import interp
 
 import common.log as trace1
 import common.CTime1000 as tm
+
+# speed controller
+from selfdrive.car.hyundai.spdcontroller  import SpdController
+from selfdrive.car.hyundai.spdctrlSlow  import SpdctrlSlow
+from selfdrive.car.hyundai.spdctrlNormal  import SpdctrlNormal
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 LaneChangeState = log.PathPlan.LaneChangeState
@@ -37,7 +43,11 @@ class CarController():
     self.steer_torque_over_timer = 0
     self.steer_torque_ratio =  1
 
-    self.timer1 = tm.CTime1000("time") 
+    self.timer1 = tm.CTime1000("time")
+
+    self.SC = SpdctrlSlow()
+    self.model_speed = 0
+    self.model_sum = 0
 
   def limit_ctrl(self, value, limit, offset ):
       p_limit = offset + limit
@@ -85,6 +95,32 @@ class CarController():
     return sys_warning, sys_state
 
 
+  def atom_tune( self, v_ego, cv_value ):  # cV(곡률에 의한 변화)
+    self.ksBPV = self.CP.atomTuning.ksBP
+    self.cvV = self.CP.atomTuning.cvV
+    self.cvSteerMAXV  = self.CP.atomTuning.cvSteerMaxV
+    self.cvSteerdUPV = self.CP.atomTuning.cvSteerdUpV
+    self.cvSteerdDNV = self.CP.atomTuning.cvSteerdDnV
+
+    self.steerMAX = {}
+    self.steerdUP = {}
+    self.steerdDN = {}
+
+    # Max
+    nPos = 0
+    for sCV in self.cvV:  # speed
+      self.steerMAX[nPos] = interp( cv_value, sCV, self.cvSteerMAXV[nPos] )
+      self.steerdUP[nPos] = interp( cv_value, sCV, self.cvSteerdUPV[nPos] )
+      self.steerdDN[nPos] = interp( cv_value, sCV, self.cvSteerdDNV[nPos] )
+      nPos += 1
+
+    MAX = interp( v_ego, self.ksBPV, self.steerMAX )
+    UP  = interp( v_ego, self.ksBPV, self.steerdUP )
+    DN  = interp( v_ego, self.ksBPV, self.steerdDN )
+
+    return MAX, UP, DN
+  
+
   def steerParams_torque(self, CS, abs_angle_steers, path_plan ):
     param = SteerLimitParams()
     v_ego_kph = CS.out.vEgo * CV.MS_TO_KPH
@@ -94,6 +130,11 @@ class CarController():
       self.steer_torque_over_timer = 0
       self.steer_torque_ratio = 1
       return param
+
+    nMAX, nUP, nDN = self.atom_tune( CS.out.vEgo, self.model_speed )
+    param.STEER_MAX = min( param.STEER_MAX, nMAX)
+    param.STEER_DELTA_UP = min( param.STEER_DELTA_UP, nUP)
+    param.STEER_DELTA_DOWN = min( param.STEER_DELTA_DOWN, nDN )
 
     sec_pval = 0.5  # 0.5 sec 운전자 => 오파  (sec)
     sec_mval = 7.0  # 오파 => 운전자.  (sec)
@@ -128,6 +169,8 @@ class CarController():
     actuators = c.actuators
     pcm_cancel_cmd = c.cruiseControl.cancel
     abs_angle_steers =  abs(actuators.steerAngle)
+
+    self.model_speed, self.model_sum = self.SC.calc_va( sm, CS.out.vEgo  )
 
     # Steering Torque
     path_plan = sm['pathPlan']
