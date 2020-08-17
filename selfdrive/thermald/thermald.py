@@ -368,7 +368,7 @@ def thermald_thread():
     panda_signature = params.get("PandaFirmware")
     fw_version_match = (panda_signature is None) or (panda_signature == FW_SIGNATURE)   # don't show alert is no panda is connected (None)
 
-    ignition = True  #  영상보기.
+    #ignition = True  #  영상보기.
     should_start = ignition
 
     # with 2% left, we killall, otherwise the phone will take a long time to boot
