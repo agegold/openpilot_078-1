@@ -120,6 +120,8 @@ class CarController():
     UP  = interp( v_ego, self.ksBPV, self.steerdUP )
     DN  = interp( v_ego, self.ksBPV, self.steerdDN )
 
+    str_log1 = 'ego={:.0f},{},{},{},{}'.format(v_ego, self.ksBPV, MAX, UP, DN )
+    trace1.printf2( '{}'.format( str_log1 ) )      
     return MAX, UP, DN
   
 
@@ -228,7 +230,7 @@ class CarController():
     hda_active = CS.lfahda["ACTIVE"]
     str_log1 = 'hda={:.0f},{:.0f}'.format( hda_usm, hda_active )
     str_log2 = 'lfa={:.0f},{:.0f},{:.0f}'.format( lfa_usm, lfa_warn, lfa_active  )
-    trace1.printf2( '{} {}'.format( str_log1, str_log2 ) )      
+    #trace1.printf2( '{} {}'.format( str_log1, str_log2 ) )      
 
     if pcm_cancel_cmd and self.CP.openpilotLongitudinalControl:
       can_sends.append(create_clu11(self.packer, frame, CS.clu11, Buttons.CANCEL))
