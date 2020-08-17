@@ -112,6 +112,8 @@ class Controls:
     elif self.CP.lateralTuning.which() == 'lqr':
       self.LaC = LatControlLQR(self.CP)
 
+    self.controlsAllowed = False
+
     self.state = State.disabled
     self.enabled = False
     self.active = False
@@ -261,10 +263,11 @@ class Controls:
     # we want to disengage openpilot. However the status from the panda goes through
     # another socket other than the CAN messages and one can arrive earlier than the other.
     # Therefore we allow a mismatch for two samples, then we trigger the disengagement.
+    self.controlsAllowed = self.sm['health'].controlsAllowed
+
     if not self.enabled:
       self.mismatch_counter = 0
-
-    if not self.sm['health'].controlsAllowed and self.enabled:
+    elif not self.controlsAllowed and self.enabled:
       self.mismatch_counter += 1
 
     self.distance_traveled += CS.vEgo * DT_CTRL
