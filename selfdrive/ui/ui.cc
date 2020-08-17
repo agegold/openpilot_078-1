@@ -172,7 +172,7 @@ static void ui_init(UIState *s) {
   s->sm = new SubMaster({"model", "controlsState", "carState", "uiLayoutState", "liveCalibration", "radarState", "thermal",
                          "health", "ubloxGnss", "driverState", "dMonitoringState", "liveParameters", "liveMpc"
 #ifdef SHOW_SPEEDLIMIT
-                                    , "liveMapData"
+                          , "liveMapData"
 #endif
   });
   s->pm = new PubMaster({"offroadLayout"});
@@ -833,7 +833,7 @@ int main(int argc, char* argv[]) {
       }
       else
       {
-        
+
       }
     }
 
