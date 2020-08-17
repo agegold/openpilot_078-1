@@ -102,9 +102,9 @@ class CarController():
     self.cvSteerdUPV = self.CP.atomTuning.cvSteerdUpV
     self.cvSteerdDNV = self.CP.atomTuning.cvSteerdDnV
 
-    self.steerMAX = [255,255,255]
-    self.steerdUP = [3,3,3]
-    self.steerdDN = [7,7,7]
+    self.steerMAX = [255,255,255,255,255,255,255,255,255,255]
+    self.steerdUP = [3,3,3,3,3,3,3,3,3,3]
+    self.steerdDN = [7,7,7,7,7,7,7,7,7,7]
 
     # Max
     nPos = 0
@@ -113,6 +113,8 @@ class CarController():
       self.steerdUP[nPos] = interp( cv_value, sCV, self.cvSteerdUPV[nPos] )
       self.steerdDN[nPos] = interp( cv_value, sCV, self.cvSteerdDNV[nPos] )
       nPos += 1
+      if nPos > 10:
+        break
 
     MAX = interp( v_ego, self.ksBPV, self.steerMAX )
     UP  = interp( v_ego, self.ksBPV, self.steerdUP )
