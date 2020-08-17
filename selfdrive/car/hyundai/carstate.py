@@ -206,7 +206,7 @@ class CarState(CarStateBase):
       elif gear == 7:
         gearShifter = GearShifter.reverse
 
-    return gearShifter    
+    return gearShifter
 
   def get_BSM(self, cp):
     leftBlindspot = False
@@ -430,9 +430,9 @@ class CarState(CarStateBase):
     ]
 
 
-    checks = []
-    #checks = [
-    #  ("LKAS11", 100)
-    #]
+    #checks = []
+    checks = [
+      ("LKAS11", 100)
+    ]
 
     return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 2)
