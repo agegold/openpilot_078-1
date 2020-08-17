@@ -39,6 +39,14 @@ class CarController():
 
     self.timer1 = tm.CTime1000("time") 
 
+  def limit_ctrl(self, value, limit, offset ):
+      p_limit = offset + limit
+      m_limit = offset - limit
+      if value > p_limit:
+          value = p_limit
+      elif  value < m_limit:
+          value = m_limit
+      return value
        
 
 
