@@ -33,6 +33,22 @@ LEON = False
 last_eon_fan_val = None
 
 
+# ip address
+ts_last_ip = None
+ip_addr = '255.255.255.255'
+def read_ipAddr( ts ):
+  
+  if ts_last_ip is None or ts - ts_last_ip >= 10.:
+    try:
+      result = subprocess.check_output(["ifconfig", "wlan0"], encoding='utf8')  # pylint: disable=unexpected-keyword-arg
+      ip_addr = re.findall(r"inet addr:((\d+\.){3}\d+)", result)[0][0]
+    except:
+      ip_addr = 'N/A'
+    ts_last_ip = ts
+
+  return ip_addr
+
+
 def read_tz(x, clip=True):
   if not ANDROID:
     # we don't monitor thermal on PC
