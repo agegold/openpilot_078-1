@@ -96,7 +96,7 @@ class CarController():
 
 
   def atom_tune( self, v_ego, cv_value ):  # cV(곡률에 의한 변화)
-    self.ksBPV = self.CP.atomTuning.ksBP
+    self.cvBPV = self.CP.atomTuning.cvBPV
     self.cvV = self.CP.atomTuning.cvV
     self.cvSteerMAXV  = self.CP.atomTuning.cvSteerMaxV
     self.cvSteerdUPV = self.CP.atomTuning.cvSteerdUpV
@@ -116,9 +116,9 @@ class CarController():
       if nPos > 10:
         break
 
-    MAX = interp( v_ego, self.ksBPV, self.steerMAX )
-    UP  = interp( v_ego, self.ksBPV, self.steerdUP )
-    DN  = interp( v_ego, self.ksBPV, self.steerdDN )
+    MAX = interp( v_ego, self.cvBPV, self.steerMAX )
+    UP  = interp( v_ego, self.cvBPV, self.steerdUP )
+    DN  = interp( v_ego, self.cvBPV, self.steerdDN )
 
     #str_log1 = 'ego={:.1f} /{:.1f}/{:.1f}/{:.1f} {}'.format(v_ego,  MAX, UP, DN, self.steerMAX )
     #trace1.printf2( '{}'.format( str_log1 ) )      

@@ -46,7 +46,7 @@ class LatControlLQR():
 
 
   def atom_tune( self, v_ego, sr_value ):  # 조향각에 따른 변화.
-    self.ksBPV = self.CP.atomTuning.ksBP
+    self.srBPV = self.CP.atomTuning.srBPV
     self.srV = self.CP.atomTuning.srV
     self.srkiV  = self.CP.atomTuning.srkiV
     self.srscaleV = self.CP.atomTuning.srscaleV
@@ -62,8 +62,8 @@ class LatControlLQR():
       if nPos > 10:
         break
 
-    ki = interp( v_ego, self.ksBPV, self.srki )
-    scale  = interp( v_ego, self.ksBPV, self.srscale )
+    ki = interp( v_ego, self.srBPV, self.srki )
+    scale  = interp( v_ego, self.srBPV, self.srscale )
      
     return ki, scale   
 

@@ -410,14 +410,16 @@ struct CarParams {
 
 
   struct AtomTuning {
-    ksBP @0 :List(Float32);
+    cvBPV @0 :List(Float32);
     cvV @1 :List(List(Float32));
     cvSteerMaxV @2 :List(List(Float32));
     cvSteerdUpV @3 :List(List(Float32));
     cvSteerdDnV @4 :List(List(Float32));
-    srV @5 :List(List(Float32));
-    srkiV @6 :List(List(Float32));
-    srscaleV @7 :List(List(Float32));
+
+    srBPV @5 :List(Float32);
+    srV @6 :List(List(Float32));
+    srkiV @7 :List(List(Float32));
+    srscaleV @8 :List(List(Float32));
   }
 
 
