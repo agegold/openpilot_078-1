@@ -57,8 +57,8 @@ class CarInterface(CarInterfaceBase):
       ret.atomTuning.cvSteerdDnV = [[7,5,3],[7,5,3],[7,5,3]]
 
       ret.atomTuning.srV        = [ [-10,    0.,     10],     [-10.,    0.,     10.],    [-10.,   0.,     10.]    ]  # CV
-      ret.atomTuning.srkiV      = [ [0.02,   0.01,   0.02],   [0.02,    0.01,   0.02],   [0.02,   0.015,   0.02]   ]
-      ret.atomTuning.srscaleV   = [ [1900.0, 2000.0, 1900.0], [1800.0,  1900.0, 1800.0], [1700.0, 1850.0, 1700.0] ]
+      ret.atomTuning.srkiV      = [ [0.02,   0.01,   0.02],   [0.02,    0.012,   0.02],   [0.02,   0.015,   0.02]   ]
+      ret.atomTuning.srscaleV   = [ [2000.0, 2100.0, 2000.0], [1800.0,  1900.0, 1800.0], [1700.0, 1850.0, 1700.0] ]
 
 
     elif candidate == CAR.SANTA_FE:
