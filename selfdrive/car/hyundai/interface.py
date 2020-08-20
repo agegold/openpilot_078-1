@@ -50,11 +50,11 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.lqr.l = [0.22, 0.318]
       ret.lateralTuning.lqr.dcGain = 0.003
 
-      ret.atomTuning.cvBPV        = [30.*CV.KPH_TO_MS,  60.*CV.KPH_TO_MS ]   # Speed  kph
-      ret.atomTuning.cvV          = [[180., 255.],  [200., 255.] ]  # CV
-      ret.atomTuning.cvSteerMaxV  = [[255,200] ,    [255,200] ]
-      ret.atomTuning.cvSteerdUpV  = [[3,3],         [3,3] ]
-      ret.atomTuning.cvSteerdDnV  = [[7,5],         [7,5] ]
+      ret.atomTuning.cvBPV        = [0. ]   # Speed  kph
+      ret.atomTuning.cvV          = [[180., 255.] ]  # CV
+      ret.atomTuning.cvSteerMaxV  = [[255.,200.]  ]
+      ret.atomTuning.cvSteerdUpV  = [[3,3] ]
+      ret.atomTuning.cvSteerdDnV  = [[7,5] ]
 
       ret.atomTuning.srBPV      = [30.*CV.KPH_TO_MS, 60.*CV.KPH_TO_MS, 80.*CV.KPH_TO_MS]   # Speed  kph
       ret.atomTuning.srV        = [ [-10,    0.,     10],     [-10.,    0.,     10.],    [-10.,   0.,     10.]    ]  # CV
