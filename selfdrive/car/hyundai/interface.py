@@ -56,10 +56,10 @@ class CarInterface(CarInterfaceBase):
       ret.atomTuning.cvSteerdUpV  = [[3,3] ]
       ret.atomTuning.cvSteerdDnV  = [[7,5] ]
 
-      ret.atomTuning.srBPV      = [30.*CV.KPH_TO_MS, 60.*CV.KPH_TO_MS, 80.*CV.KPH_TO_MS]   # Speed  kph
-      ret.atomTuning.srV        = [ [-10,    0.,     10],     [-10.,    0.,     10.],    [-10.,   0.,     10.]    ]  # CV
-      ret.atomTuning.srkiV      = [ [0.015,   0.01,   0.015],   [0.02,    0.015,  0.02],   [0.02,   0.02,  0.02]   ]
-      ret.atomTuning.srscaleV   = [ [2000.0, 2100.0, 2000.0], [1800.0,  1900.0, 1800.0], [1700.0, 1850.0, 1700.0] ]
+      ret.atomTuning.srBPV      = [30.*CV.KPH_TO_MS, 40.*CV.KPH_TO_MS, 80.*CV.KPH_TO_MS]   # Speed  kph
+      ret.atomTuning.srV        = [ [0.],      [0.],      [0.]     ]  # CV
+      ret.atomTuning.srkiV      = [ [0.001],   [0.015],   [0.02]   ]
+      ret.atomTuning.srscaleV   = [ [2000],    [1900.0],  [1850.0] ]
 
 
     elif candidate == CAR.SANTA_FE:
