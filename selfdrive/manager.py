@@ -437,13 +437,28 @@ def manager_thread():
   # now loop
   thermal_sock = messaging.sub_sock('thermal')
 
+  if os.getenv("GET_CPU_USAGE"):
+    proc_sock = messaging.sub_sock('procLog', conflate=True)
+
   cloudlog.info("manager start")
   cloudlog.info({"environ": os.environ})
 
-  # save boot log
-  subprocess.call(["./loggerd", "--bootlog"], cwd=os.path.join(BASEDIR, "selfdrive/loggerd"))
-
   params = Params()
+
+  EnableLogger = int(params.get('OpkrEnableLogger'))     
+
+  if not EnableLogger:
+    car_started_processes.remove( 'loggerd' )
+    persistent_processes.remove( 'logmessaged' )
+    persistent_processes.remove( 'uploader' )
+    persistent_processes.remove( 'logcatd' )
+    persistent_processes.remove( 'updated' )
+    persistent_processes.remove( 'deleter' )
+    persistent_processes.remove( 'tombstoned' )
+  else:
+    # save boot log
+    subprocess.call(["./loggerd", "--bootlog"], cwd=os.path.join(BASEDIR, "selfdrive/loggerd"))  
+
 
   # start daemon processes
   for p in daemon_processes:
@@ -468,6 +483,9 @@ def manager_thread():
   started_prev = False
   logger_dead = False
 
+  start_t = time.time()
+  first_proc = None
+
   while 1:
     msg = messaging.recv_sock(thermal_sock, wait=True)
 
@@ -486,7 +504,7 @@ def manager_thread():
 
     if msg.thermal.started:
       for p in car_started_processes:
-        if p == "loggerd" and logger_dead:
+        if (p == "loggerd" and logger_dead) or p == "uploader":
           kill_managed_process(p)
         else:
           start_managed_process(p)
@@ -518,6 +536,20 @@ def manager_thread():
     # Exit main loop when uninstall is needed
     if params.get("DoUninstall", encoding='utf8') == "1":
       break
+
+    if os.getenv("GET_CPU_USAGE"):
+      dt = time.time() - start_t
+
+      # Get first sample
+      if dt > 30 and first_proc is None:
+        first_proc = messaging.recv_sock(proc_sock)
+
+      # Get last sample and exit
+      if dt > 90:
+        last_proc = messaging.recv_sock(proc_sock, wait=True)
+
+        cleanup_all_processes(None, None)
+        sys.exit(print_cpu_usage(first_proc, last_proc))
 
 def manager_prepare(spinner=None):
   # build all processes
@@ -570,6 +602,7 @@ def main():
     ("OpenpilotEnabledToggle", "1"),
     ("LaneChangeEnabled", "1"),
     ("IsDriverViewEnabled", "0"),
+    ("OpkrEnableLogger", "0"),
   ]
 
   # set unset params
@@ -598,6 +631,8 @@ def main():
 
   try:
     manager_thread()
+  except SystemExit:
+    raise
   except Exception:
     traceback.print_exc()
     crash.capture_exception()

@@ -15,8 +15,12 @@ import cereal.messaging as messaging
 from selfdrive.controls.lib.alertmanager import set_offroad_alert
 from selfdrive.loggerd.config import get_available_percent
 from selfdrive.pandad import get_expected_signature
+from selfdrive.kegman_conf import kegman_conf
+kegman = kegman_conf()
 from selfdrive.thermald.power_monitoring import PowerMonitoring, get_battery_capacity, get_battery_status, \
                                                 get_battery_current, get_battery_voltage, get_usb_present
+import re
+import subprocess
 
 FW_SIGNATURE = get_expected_signature()
 
@@ -31,6 +35,8 @@ DISCONNECT_TIMEOUT = 5.  # wait 5 seconds before going offroad after disconnect 
 
 LEON = False
 last_eon_fan_val = None
+
+mediaplayer = '/data/openpilot/selfdrive/openpilot/mediaplayer/'
 
 
 def read_tz(x, clip=True):
@@ -142,11 +148,31 @@ def handle_fan_uno(max_cpu_temp, bat_temp, fan_speed, ignition):
 
   return new_speed
 
+def check_car_battery_voltage(should_start, health, charging_disabled, msg):
+
+  # charging disallowed if:
+  #   - there are health packets from panda, and;
+  #   - 12V battery voltage is too low, and;
+  #   - onroad isn't started
+  print(health)
+  
+  if charging_disabled and (health is None or health.health.voltage > (int(kegman.conf['carVoltageMinEonShutdown'])+500)) and msg.thermal.batteryPercent < int(kegman.conf['battChargeMin']):
+    charging_disabled = False
+    os.system('echo "1" > /sys/class/power_supply/battery/charging_enabled')
+  elif not charging_disabled and (msg.thermal.batteryPercent > int(kegman.conf['battChargeMax']) or (health is not None and health.health.voltage < int(kegman.conf['carVoltageMinEonShutdown']) and not should_start)):
+    charging_disabled = True
+    os.system('echo "0" > /sys/class/power_supply/battery/charging_enabled')
+  elif msg.thermal.batteryCurrent < 0 and msg.thermal.batteryPercent > int(kegman.conf['battChargeMax']):
+    charging_disabled = True
+    os.system('echo "0" > /sys/class/power_supply/battery/charging_enabled')
+
+  return charging_disabled
+
 
 def thermald_thread():
   # prevent LEECO from undervoltage
-  BATT_PERC_OFF = 10 if LEON else 3
-
+  BATT_PERC_OFF = int(kegman.conf['battPercOff'])
+  
   health_timeout = int(1000 * 2.5 * DT_TRML)  # 2.5x the expected health frequency
 
   # now loop
@@ -174,6 +200,7 @@ def thermald_thread():
   cpu_temp_filter = FirstOrderFilter(0., CPU_TEMP_TAU, DT_TRML)
   health_prev = None
   fw_version_match_prev = True
+  charging_disabled = False
   current_update_alert = None
   time_valid_prev = True
   should_start_prev = False
@@ -185,7 +212,16 @@ def thermald_thread():
   pm = PowerMonitoring()
   no_panda_cnt = 0
 
+  ts_last_ip = 0
+  ip_addr = '255.255.255.255'
+
+  # sound trigger
+  sound_trigger = 1
+
+  env = dict(os.environ)
+  env['LD_LIBRARY_PATH'] = mediaplayer
   while 1:
+    ts = sec_since_boot()
     health = messaging.recv_sock(health_sock, wait=True)
     location = messaging.recv_sock(location_sock)
     location = location.gpsLocation if location else None
@@ -193,6 +229,26 @@ def thermald_thread():
 
     if health is not None:
       usb_power = health.health.usbPowerMode != log.HealthData.UsbPowerMode.client
+      ignition = health.health.ignitionLine or health.health.ignitionCan
+
+      # Setup fan handler on first connect to panda
+      if handle_fan is None and health.health.hwType != log.HealthData.HwType.unknown:
+        is_uno = health.health.hwType == log.HealthData.HwType.uno
+
+        if is_uno or not ANDROID:
+          cloudlog.info("Setting up UNO fan handler")
+          handle_fan = handle_fan_uno
+        else:
+          cloudlog.info("Setting up EON fan handler")
+          setup_eon_fan()
+          handle_fan = handle_fan_eon
+
+      # Handle disconnect
+      if health_prev is not None:
+        if health.health.hwType == log.HealthData.HwType.unknown and \
+          health_prev.health.hwType != log.HealthData.HwType.unknown:
+          params.panda_disconnect()
+      health_prev = health
 
       # If we lose connection to the panda, wait 5 seconds before going offroad
       if health.health.hwType == log.HealthData.HwType.unknown:
@@ -250,6 +306,17 @@ def thermald_thread():
       msg.thermal.batteryStatus = "Charging"
       msg.thermal.bat = 0
 
+    # update ip every 10 seconds
+    ts = sec_since_boot()
+    if ts - ts_last_ip >= 10.:
+      try:
+        result = subprocess.check_output(["ifconfig", "wlan0"], encoding='utf8')  # pylint: disable=unexpected-keyword-arg
+        ip_addr = re.findall(r"inet addr:((\d+\.){3}\d+)", result)[0][0]
+      except:
+        ip_addr = 'N/A'
+      ts_last_ip = ts
+    msg.thermal.ipAddr = ip_addr
+
     current_filter.update(msg.thermal.batteryCurrent / 1e6)
 
     # TODO: add car battery voltage check
@@ -302,45 +369,45 @@ def thermald_thread():
     time_valid_prev = time_valid
 
     # Show update prompt
-    try:
-      last_update = datetime.datetime.fromisoformat(params.get("LastUpdateTime", encoding='utf8'))
-    except (TypeError, ValueError):
-      last_update = now
-    dt = now - last_update
+#    try:
+#      last_update = datetime.datetime.fromisoformat(params.get("LastUpdateTime", encoding='utf8'))
+#    except (TypeError, ValueError):
+#      last_update = now
+#    dt = now - last_update
 
-    update_failed_count = params.get("UpdateFailedCount")
-    update_failed_count = 0 if update_failed_count is None else int(update_failed_count)
-    last_update_exception = params.get("LastUpdateException", encoding='utf8')
+#    update_failed_count = params.get("UpdateFailedCount")
+#    update_failed_count = 0 if update_failed_count is None else int(update_failed_count)
+#    last_update_exception = params.get("LastUpdateException", encoding='utf8')
 
-    if update_failed_count > 15 and last_update_exception is not None:
-      if current_branch in ["release2", "dashcam"]:
-        extra_text = "Ensure the software is correctly installed"
-      else:
-        extra_text = last_update_exception
+#    if update_failed_count > 15 and last_update_exception is not None:
+#      if current_branch in ["release2", "dashcam"]:
+#        extra_text = "Ensure the software is correctly installed"
+#      else:
+#        extra_text = last_update_exception
 
-      if current_update_alert != "update" + extra_text:
-        current_update_alert = "update" + extra_text
-        set_offroad_alert("Offroad_ConnectivityNeeded", False)
-        set_offroad_alert("Offroad_ConnectivityNeededPrompt", False)
-        set_offroad_alert("Offroad_UpdateFailed", True, extra_text=extra_text)
-    elif dt.days > DAYS_NO_CONNECTIVITY_MAX and update_failed_count > 1:
-      if current_update_alert != "expired":
-        current_update_alert = "expired"
-        set_offroad_alert("Offroad_UpdateFailed", False)
-        set_offroad_alert("Offroad_ConnectivityNeededPrompt", False)
-        set_offroad_alert("Offroad_ConnectivityNeeded", True)
-    elif dt.days > DAYS_NO_CONNECTIVITY_PROMPT:
-      remaining_time = str(max(DAYS_NO_CONNECTIVITY_MAX - dt.days, 0))
-      if current_update_alert != "prompt" + remaining_time:
-        current_update_alert = "prompt" + remaining_time
-        set_offroad_alert("Offroad_UpdateFailed", False)
-        set_offroad_alert("Offroad_ConnectivityNeeded", False)
-        set_offroad_alert("Offroad_ConnectivityNeededPrompt", True, extra_text=f"{remaining_time} days.")
-    elif current_update_alert is not None:
-      current_update_alert = None
-      set_offroad_alert("Offroad_UpdateFailed", False)
-      set_offroad_alert("Offroad_ConnectivityNeeded", False)
-      set_offroad_alert("Offroad_ConnectivityNeededPrompt", False)
+#      if current_update_alert != "update" + extra_text:
+#        current_update_alert = "update" + extra_text
+#        set_offroad_alert("Offroad_ConnectivityNeeded", False)
+#        set_offroad_alert("Offroad_ConnectivityNeededPrompt", False)
+#        set_offroad_alert("Offroad_UpdateFailed", True, extra_text=extra_text)
+#    elif dt.days > DAYS_NO_CONNECTIVITY_MAX and update_failed_count > 1:
+#      if current_update_alert != "expired":
+#        current_update_alert = "expired"
+#        set_offroad_alert("Offroad_UpdateFailed", False)
+#        set_offroad_alert("Offroad_ConnectivityNeededPrompt", False)
+#        set_offroad_alert("Offroad_ConnectivityNeeded", True)
+#    elif dt.days > DAYS_NO_CONNECTIVITY_PROMPT:
+#      remaining_time = str(max(DAYS_NO_CONNECTIVITY_MAX - dt.days, 0))
+#      if current_update_alert != "prompt" + remaining_time:
+#        current_update_alert = "prompt" + remaining_time
+#        set_offroad_alert("Offroad_UpdateFailed", False)
+#        set_offroad_alert("Offroad_ConnectivityNeeded", False)
+#        set_offroad_alert("Offroad_ConnectivityNeededPrompt", True, extra_text=f"{remaining_time} days.")
+#    elif current_update_alert is not None:
+#      current_update_alert = None
+#      set_offroad_alert("Offroad_UpdateFailed", False)
+#      set_offroad_alert("Offroad_ConnectivityNeeded", False)
+#      set_offroad_alert("Offroad_ConnectivityNeededPrompt", False)
 
     do_uninstall = params.get("DoUninstall") == b"1"
     accepted_terms = params.get("HasAcceptedTerms") == terms_version
@@ -358,7 +425,7 @@ def thermald_thread():
     should_start = should_start and accepted_terms and completed_training and (not do_uninstall)
 
     # check for firmware mismatch
-    should_start = should_start and fw_version_match
+    #should_start = should_start and fw_version_match
 
     # check if system time is valid
     should_start = should_start and time_valid
@@ -402,12 +469,24 @@ def thermald_thread():
         off_ts = sec_since_boot()
         os.system('echo powersave > /sys/class/devfreq/soc:qcom,cpubw/governor')
 
+      if sound_trigger == 1 and msg.thermal.batteryStatus == "Discharging" and started_seen and (sec_since_boot() - off_ts) > 1:
+        subprocess.Popen([mediaplayer + 'mediaplayer', '/data/openpilot/selfdrive/assets/sounds/eondetach.wav'], shell = False, stdin=None, stdout=None, stderr=None, env = env, close_fds=True)
+        sound_trigger = 0
       # shutdown if the battery gets lower than 3%, it's discharging, we aren't running for
       # more than a minute but we were running
-      if msg.thermal.batteryPercent < BATT_PERC_OFF and msg.thermal.batteryStatus == "Discharging" and \
-         started_seen and (sec_since_boot() - off_ts) > 60:
+      if msg.thermal.batteryPercent <= BATT_PERC_OFF and msg.thermal.batteryStatus == "Discharging" and \
+         started_seen and (sec_since_boot() - off_ts) > 30:
         os.system('LD_LIBRARY_PATH="" svc power shutdown')
 
+    charging_disabled = check_car_battery_voltage(should_start, health, charging_disabled, msg)
+
+    if msg.thermal.batteryCurrent > 0:
+      msg.thermal.batteryStatus = "Discharging"
+    else:
+      msg.thermal.batteryStatus = "Charging"
+
+    
+    msg.thermal.chargingDisabled = charging_disabled
     # Offroad power monitoring
     pm.calculate(health)
     msg.thermal.offroadPowerUsage = pm.get_power_used()
@@ -428,6 +507,8 @@ def thermald_thread():
     usb_power_prev = usb_power
     fw_version_match_prev = fw_version_match
     should_start_prev = should_start
+
+    print(msg)
 
     # report to server once per minute
     if (count % int(60. / DT_TRML)) == 0:

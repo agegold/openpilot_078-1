@@ -15,10 +15,15 @@ HwType = log.HealthData.HwType
 
 
 def get_startup_event(car_recognized, controller_available):
-  if comma_remote and tested_branch:
-    event = EventName.startup
-  else:
-    event = EventName.startupMaster
+  event = EventName.startup
+  if Params().get("GitRemote", encoding="utf8") in ['git@github.com:commaai/openpilot.git', 'https://github.com/commaai/openpilot.git']:
+    if Params().get("GitBranch", encoding="utf8") not in ['devel', 'release2-staging', 'dashcam-staging', 'release2', 'dashcam']:
+      event = EventName.startupMaster
+
+  #if comma_remote and tested_branch:
+  #  event = EventName.startup
+  #else:
+  #  event = EventName.startupMaster
 
   if not car_recognized:
     event = EventName.startupNoCar
@@ -114,7 +119,7 @@ def fingerprint(logcan, sendcan, has_relay):
   Params().put("CarVin", vin)
 
   finger = gen_empty_fingerprint()
-  candidate_cars = {i: all_known_cars() for i in [0, 1]}  # attempt fingerprint on both bus 0 and 1
+  candidate_cars = {i: all_known_cars() for i in [0]}  # attempt fingerprint on bus 0 only
   frame = 0
   frame_fingerprint = 10  # 0.1s
   car_fingerprint = None

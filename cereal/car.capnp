@@ -112,7 +112,17 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     wrongCruiseMode @87;
     neosUpdateRequired @88;
     modeldLagging @89;
-    deviceFalling @90;
+    manualSteeringRequired @90;
+    manualSteeringRequiredBlinkersOn @91;
+    deviceFalling @92;
+    laneChangeManual @93;
+    emgButtonManual @94;
+    driverSteering @95;
+    modeChangeOpenpilot @96;
+    modeChangeDistcurv @97;
+    modeChangeDistance @98;
+    modeChangeTrafficjam @99;
+    modeChangeStock @100;
   }
 }
 
@@ -164,14 +174,21 @@ struct CarState {
   leftBlinker @20 :Bool;
   rightBlinker @21 :Bool;
   genericToggle @23 :Bool;
+  distanceToggle @37 :Float32;
+  laneDepartureToggle @38 :Bool;
 
   # lock info
   doorOpen @24 :Bool;
   seatbeltUnlatched @25 :Bool;
   canValid @26 :Bool;
 
+
   # clutch (manual transmission only)
   clutchPressed @28 :Bool;
+
+  readdistancelines @39 :Float32;
+  lkMode @40 :Bool;
+  engineRPM @41 :Float32;
 
   # which packets this state came from
   canMonoTimes @12: List(UInt64);
@@ -195,6 +212,7 @@ struct CarState {
     speedOffset @3 :Float32;
     standstill @4 :Bool;
     nonAdaptive @5 :Bool;
+    modeSel @6 :Int16;
   }
 
   enum GearShifter {
@@ -335,6 +353,18 @@ struct CarControl {
       chimeWarningRepeat @6;
       chimePrompt @7;
       chimeWarning2Repeat @8;
+      chimeReady @9;
+      chimeDoorOpen @10;
+      chimeGearDrive @11;
+      chimeLaneChange @12;
+      chimeLaneDeparture @13;
+      chimeRoadWarning @14;
+      chimeSeatBelt @15;
+      chimeViewUncertain @16;
+      chimeModeOpenpilot @17;
+      chimeModeDistcurv @18;
+      chimeModeDistance @19;
+      chimeModeTrafficjam @20;
     }
   }
 }
@@ -406,6 +436,9 @@ struct CarParams {
   communityFeature @46: Bool;  # true if a community maintained feature is detected
   fingerprintSource @49: FingerprintSource;
   networkLocation @50 :NetworkLocation;  # Where Panda/C2 is integrated into the car's CAN network
+  mdpsBus @51: Int8;
+  sasBus @52: Int8;
+  sccBus @53: Int8;
 
   struct LateralParams {
     torqueBP @0 :List(Int32);
@@ -418,6 +451,8 @@ struct CarParams {
     kiBP @2 :List(Float32);
     kiV @3 :List(Float32);
     kf @4 :Float32;
+    kfV @5 :List(Float32);
+    kfBP @6 :List(Float32);
   }
 
   struct LongitudinalPIDTuning {
@@ -427,6 +462,8 @@ struct CarParams {
     kiV @3 :List(Float32);
     deadzoneBP @4 :List(Float32);
     deadzoneV @5 :List(Float32);
+    kfBP @6 :List(Float32);
+    kfV @7 :List(Float32);
   }
 
   struct LateralINDITuning {

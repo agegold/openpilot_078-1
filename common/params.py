@@ -110,6 +110,7 @@ keys = {
   "Offroad_IsTakingSnapshot": [TxType.CLEAR_ON_MANAGER_START],
   "Offroad_NeosUpdate": [TxType.CLEAR_ON_MANAGER_START],
   "Offroad_UpdateFailed": [TxType.CLEAR_ON_MANAGER_START],
+  "OpkrEnableLogger": [TxType.PERSISTENT],
 }
 
 

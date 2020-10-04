@@ -5,6 +5,10 @@ from common.filter_simple import FirstOrderFilter
 from common.stat_live import RunningStatFilter
 
 from cereal import car
+from common.params import Params
+
+params = Params()
+EnableLogger = int(params.get('OpkrEnableLogger'))
 
 EventName = car.CarEvent.EventName
 
@@ -14,7 +18,10 @@ EventName = car.CarEvent.EventName
 #  We recommend that you do not change these numbers from the defaults.
 # ******************************************************************************************
 
-_AWARENESS_TIME = 70.  # one minute limit without user touching steering wheels make the car enter a terminal status
+if not EnableLogger:
+  _AWARENESS_TIME = 18000.
+else:
+  _AWARENESS_TIME = 70.  # one minute limit without user touching steering wheels make the car enter a terminal status
 _AWARENESS_PRE_TIME_TILL_TERMINAL = 15.  # a first alert is issued 25s before expiration
 _AWARENESS_PROMPT_TIME_TILL_TERMINAL = 6.  # a second alert is issued 15s before start decelerating the car
 _DISTRACTED_TIME = 11.
@@ -228,8 +235,8 @@ class DriverStatus():
     driver_attentive = self.driver_distraction_filter.x < 0.37
     awareness_prev = self.awareness
 
-    if self.face_detected and self.hi_stds * DT_DMON > _HI_STD_TIMEOUT:
-      events.add(EventName.driverMonitorLowAcc)
+    #if self.face_detected and self.hi_stds * DT_DMON > _HI_STD_TIMEOUT:
+      #events.add(EventName.driverMonitorLowAcc)
 
     if (driver_attentive and self.face_detected and self.pose.low_std and self.awareness > 0):
       # only restore awareness when paying attention and alert is not red

@@ -297,6 +297,7 @@ struct ThermalData {
 
   memUsedPercent @19 :Int8;
   cpuPerc @20 :Int8;
+  ipAddr @25 :Text;
 
   enum ThermalStatus {
     green @0;   # all processes run
@@ -535,6 +536,8 @@ struct ControlsState @0x97ff69c53601abf1 {
 
   decelForModel @54 :Bool;
   canErrorCounter @57 :UInt32;
+  alertTextMsg1  @58 :Text;
+  alertTextMsg2  @59 :Text;  
 
   lateralControlState :union {
     indiState @52 :LateralINDIState;
@@ -806,6 +809,7 @@ struct PathPlan {
   desire @17 :Desire;
   laneChangeState @18 :LaneChangeState;
   laneChangeDirection @19 :LaneChangeDirection;
+  steerRatio @20 :Float32;
 
   enum Desire {
     none @0;
@@ -822,6 +826,7 @@ struct PathPlan {
     preLaneChange @1;
     laneChangeStarting @2;
     laneChangeFinishing @3;
+    laneChangeDone @4;
   }
 
   enum LaneChangeDirection {
